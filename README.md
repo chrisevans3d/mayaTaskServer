@@ -19,3 +19,5 @@ for f in os.listdir(animDir):
     if ".mb" in f:
         serverTasks.fbxAnimExport(animDir+f,exportPath='d:/FBX/femme/')
 ```
+
+It currently only works on local host, pending code to xfer the maya file to the server to it can operate on it.
