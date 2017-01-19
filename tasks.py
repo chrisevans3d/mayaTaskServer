@@ -16,9 +16,12 @@ from epic.rigging import uExport as ue
 
 from Modules.facial import face
 
+def logToDisk():
+    pass
+
 # -------------------------------------------------------
 # This is the function that exports FBX Animations for ARTv1.
-def fbxAnimExport(uExportNode, exportPath=None, bakeRoot=False, mayaPyPath=None, sysPathAppend=None, CPU=None, debug=1):
+def fbxAnimExport(uExportNode, exportPath=None, bakeRoot=False, mayaPyPath=None, sysPathAppend=None, CPU=None, logPath=None, debug=1):
 
     uNode = ue.uExport(uExportNode)
 
@@ -66,48 +69,6 @@ def fbxAnimExport(uExportNode, exportPath=None, bakeRoot=False, mayaPyPath=None,
     else:
         print 'No settings Dict'
 
-# -------------------------------------------------------
-# This is the function that exports face pose FBX files in a format for the engine, as well as the pose list sidecar text
-def facialPoseExport(facialNode, uExportNode, exportPath=None, bakeRoot=False, mayaPyPath=None, sysPathAppend=None, CPU=None, debug=1):
-
-    faceNode = face.FaceModule(faceNode=facialNode)
-    uNode = ue.uExport(uExportNode)
-
-    if not exportPath:
-        #make it from the maya file next time
-        return
-
-    #converting the path from escaped to forward slash just as padding
-    exportPath = exportPath.replace('\\','/')
-
-    tStart = 0
-    frames, poseLog = faceNode.bakePosesToTimeline(startFrame=tStart)
-
-    tEnd = frames
-
-    #write out facial pose node text
-    f = open(exportPath + faceNode.node + '.poseMap', 'w')
-    f.write(poseLog)
-    f.close
-
-    unhideSkeleton(uNode)
-
-    #make sure fbx is loaded
-    cmds.loadPlugin("fbxmaya.mll")
-
-    #set export options
-    setExportFlags(rot='Quat', upAxis='z', animStart=tStart, animEnd=tEnd)
-
-    #find what to export
-    toExport = []
-    toExport.extend(cmds.listRelatives(uNode.export_root, type='joint', allDescendents=True, f=1))
-    cmds.select(toExport)
-
-    execMe = "FBXExport -f \"" + exportPath + faceNode.node + '_facialPoses.fbx' + "\" -s"
-    print execMe
-    mel.eval(execMe)
-    execMe = "FBXExport -f \"" + exportPath + faceNode.node + '_faceFX.fbx' + "\" -s"
-    mel.eval(execMe)
 # -------------------------------------------------------
 ## HELPER FUNCTIONS
 ###################################################################

@@ -20,6 +20,7 @@ import socket
 import sys
 import datetime
 import time
+from cStringIO import StringIO
 
 from PySide import QtGui, QtCore
 
@@ -43,7 +44,6 @@ def show():
         mayaTaskServerWindow = mayaTaskServer()
         mayaTaskServerWindow.show()
     return mayaTaskServerWindow
-
 
 
 ## TASK SERVER
@@ -133,6 +133,7 @@ class MayaTaskServer(base_class, form_class):
         font.setPointSize(12)
         wid1.setFont(0, font)
         wid1.setFont(1, font)
+        wid1.setFont(2, font)
 
         if self.mainJobServer.workerDict.keys():
             for worker in self.mainJobServer.workerDict.keys():
@@ -152,14 +153,15 @@ class MayaTaskServer(base_class, form_class):
                     wid2.setText(0, wNum)
 
                     wid2.setText(1, worker.task['description'])
+                    wid2.setText(2, worker.task['mayaFile'].split('\\')[-1])
                     green = QtGui.QColor(140, 200, 150, 255)
                     wid2.setForeground(0, green)
                     wid2.setForeground(1, green)
                     wid2.setForeground(2, green)
-                    wid2.setText(3, worker.task['user'])
+                    wid2.setText(4, worker.task['user'])
                 else:
                     wid2.setText(1, '<None>')
-                wid2.setText(2, 'LOCALHOST')
+                wid2.setText(3, 'LOCALHOST')
 
                 font = wid2.font(0)
                 font.setWeight(QtGui.QFont.Bold)
@@ -171,12 +173,8 @@ class MayaTaskServer(base_class, form_class):
                 wid2.setText(4, str(len(worker.taskHistory)))
 
                 #how many seconds worked?
-                wid2.setText(4, str(len(worker.taskHistory)))
-                wid2.setText(5, time.strftime("%H:%M:%S", time.gmtime(worker.timeWorked)))
-                # worker task history
-                #for t in worker.taskHistory.keys():
-                #    taskWid = QtGui.QTreeWidgetItem()
-                #    taskWid.setText(0, worker.taskHistory[t])
+                wid2.setText(5, str(len(worker.taskHistory)))
+                wid2.setText(6, time.strftime("%H:%M:%S", time.gmtime(worker.timeWorked)))
 
         else:
             wid2 = QtGui.QTreeWidgetItem()
@@ -216,11 +214,21 @@ class MayaTaskServer(base_class, form_class):
 
     def createWorkerTab(self, worker):
         new_tab = QtGui.QWidget(self.bottomTabs)
+        new_tab.tabNum = worker.cpuID
+
         self.bottomTabs.addTab(new_tab, 'Worker' + str(worker.cpuID))
         new_tab.setAutoFillBackground(True)
         palette = new_tab.palette()
         palette.setColor(new_tab.backgroundRole(), QtCore.Qt.darkGray)
         new_tab.setPalette(palette)
+
+        new_tab.outputText = QtGui.QTextEdit()
+        verticalLayout = QtGui.QVBoxLayout()
+        verticalLayout.addWidget(new_tab.outputText)
+        new_tab.outputText.setText('Initialized logging for Worker' + str(worker.cpuID))
+        new_tab.setLayout(verticalLayout)
+
+        return new_tab
 
 ## WORKER CLASS
 ####################################################################
@@ -246,9 +254,10 @@ class MayaWorker(object):
 
         self.log = ''
         self.process = None
+        self.output = None
 
         #create worker tab
-        win.createWorkerTab(self)
+        self.workerTab = win.createWorkerTab(self)
 
     def startTask(self):
         #time
@@ -257,10 +266,13 @@ class MayaWorker(object):
         self.timeStart = time.time()
 
         if self.task:
-            print 'WORKER #' + str(self.cpuID) + ':', 'Starting task - ', self.task['description'], '-', self.task['mayaFile']
+            outputText = 'WORKER #' + str(self.cpuID) + ': Starting task - ' + self.task['description'] + ' - ' + self.task['mayaFile']
+            self.workerTab.outputText.append(str(outputText))
             self.busy = True
             win.refreshSignal.emit()
-            self.process = win.mainJobServer.mpPool.apply_async(serverUtils.spawnMaya, (self.task,), callback=self.taskComplete)
+            log = self.task['description'] + '_' + self.task['mayaFile'].split('\\')[-1].split('.')[0]
+            #self.task['log'] = log
+            self.process = win.mainJobServer.mpPool.apply_async(serverUtils.spawnMaya, (self.task), callback=self.taskComplete)
 
     def taskComplete(self, arg):
         # updating the task history with the completed task
@@ -268,7 +280,9 @@ class MayaWorker(object):
 
         elapsed = time.time() - self.timeStart
         self.timeWorked += elapsed
-        print 'WORKER #' + str(self.cpuID) + ':', 'completed task - ', self.task['description']
+        outputText = 'WORKER #' + str(self.cpuID) + ': completed task - ' + self.task['description'] + ' in ' + str(elapsed) + ' seconds.'
+
+        self.workerTab.outputText.append(outputText)
 
         # checking if there is a task to take from the queue
         if len(win.mainJobServer.q) > 0:

@@ -494,7 +494,7 @@
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="spacing">
         <number>2</number>
@@ -665,7 +665,7 @@
           <enum>QFrame::Sunken</enum>
          </property>
          <property name="columnCount">
-          <number>6</number>
+          <number>7</number>
          </property>
          <column>
           <property name="text">
@@ -682,6 +682,18 @@
          <column>
           <property name="text">
            <string>TASK</string>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>9</pointsize>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>FILE</string>
           </property>
           <property name="font">
            <font>
@@ -756,9 +768,15 @@
           <property name="text">
            <string/>
           </property>
+          <property name="text">
+           <string/>
+          </property>
           <item>
            <property name="text">
             <string>No jobs</string>
+           </property>
+           <property name="text">
+            <string/>
            </property>
            <property name="text">
             <string/>
@@ -796,9 +814,15 @@
           <property name="text">
            <string/>
           </property>
+          <property name="text">
+           <string/>
+          </property>
           <item>
            <property name="text">
             <string>No jobs</string>
+           </property>
+           <property name="text">
+            <string/>
            </property>
            <property name="text">
             <string/>

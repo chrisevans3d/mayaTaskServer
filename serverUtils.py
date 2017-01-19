@@ -57,6 +57,7 @@ cmds.upAxis(ax='z') # Sets the up axis to Z
     #TODO: Make windows stay open
     mayaTaskProc = subprocess.Popen(mayapy + ' -u ' + fPath)
     mayaTaskProc.wait()
+
     return
 
 
